@@ -69,8 +69,8 @@
          ("hermite" (apply #'draw-hermite edges .01 args))
          ("bezier" (apply #'draw-bezier edges .01 args))
          ("box" (apply #'add-box edges args))
-         ("sphere" (apply #'add-sphere edges 10 args))
-         
+         ("sphere" (apply #'add-sphere edges 50 args))
+         ("torus" (apply #'add-torus edges 50 args))
          ("scale" (apply #'scale transform args))
          ("move" (apply #'translate transform args))
          ("rotate" (apply #'rotate transform args))
@@ -83,7 +83,7 @@
 (defun valid-command (line)
   "Returns t if line is a valid command. Nil otherwise."
   (member line
-          '("line" "circle" "hermite" "bezier" "box" "sphere" "ident"
+          '("line" "circle" "hermite" "bezier" "box" "sphere" "torus" "ident"
             "scale" "move" "rotate" "apply" "display" "save" "clear")
           :test #'string=))
 

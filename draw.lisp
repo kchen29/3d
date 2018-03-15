@@ -137,7 +137,7 @@
     (add-edge edges right down z right down back)))
 
 (defun generate-sphere (step x y z r)
-  "Generates an edges with center (x y z), radius R, points drawn STEP times."
+  "Generates a sphere onto edges with center (x y z), radius R, points drawn STEP times."
   (let (edges)
     (loop for phi below step
           for s = (* 2 pi (/ phi step))
@@ -153,6 +153,29 @@
 (defun add-sphere (edges step x y z r)
   "Adds a sphere into EDGES."
   (loop for point in (generate-sphere step x y z r)
+        for p1 = (first point)
+        for p2 = (second point)
+        for p3 = (third point)
+        do (add-edge edges p1 p2 p3 (+ 3 p1) (+ 3 p2) (+ 3 p3))))
+
+(defun generate-torus (step x y z r1 r2)
+  "Generates a torus onto edges with center (x y z), cross-section circle radius R1,
+   rotated around with radius R2. Points drawn STEP times."
+  (let (edges)
+    (loop for phi below step
+          for s = (* 2 pi (/ phi step))
+          do (loop for theta below step
+                   for v = (* 2 pi (/ theta step))
+                   do (push (list (+ x (* (cos s) (+ r2 (* r1 (cos v)))))
+                                  (- y (* r1 (sin v)))
+                                  (- z (* (sin s) (+ r2 (* r1 (cos v)))))
+                                  1)
+                            edges)))
+    edges))
+
+(defun add-torus (edges step x y z r1 r2)
+  "Adds a torus onto EDGES."
+  (loop for point in (generate-torus step x y z r1 r2)
         for p1 = (first point)
         for p2 = (second point)
         for p3 = (third point)
