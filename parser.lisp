@@ -27,6 +27,13 @@
 	 bezier: add a bezier curve to the edge matrix -
 	    takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
 
+         box: adds a rectangular prism (box) to the edge matrix -
+            takes 6 parameters (x, y, z, width, height, depth)
+         sphere: adds a sphere to the edge matrix - takes 4 parameters (x, y, z, radius)
+         torus: adds a torus to the edge matrix - takes 5 parameters (x, y, z, radius1, radius2)
+            radius1 is the radius of the cross-section circles
+            radius2 is the radius of the center of those circles rotated around the center by
+
 	 ident: set the transform matrix to the identity matrix
 	 scale: create a scale matrix,
 	    then multiply the transform matrix by the scale matrix -
@@ -39,11 +46,12 @@
 	    takes 2 arguments (axis theta) axis should be x, y or z.
             Theta is in degrees
 	 apply: apply the current transformation matrix to the edge matrix
-
+          
 	 display: draw the lines of the edge matrix to the screen, then display the screen
 	 save: draw the lines of the edge matrix to the screen
 	    save the screen to a file -
 	    takes 1 argument (filename)
+         clear: clears the edge matrix of all points
 	 quit: end parsing."
   (with-open-file (stream filename)
     (do ((line (next-line stream) (next-line stream)))
@@ -68,13 +76,15 @@
          ("circle" (apply #'draw-circle edges .01 args))
          ("hermite" (apply #'draw-hermite edges .01 args))
          ("bezier" (apply #'draw-bezier edges .01 args))
+         
          ("box" (apply #'add-box edges args))
          ("sphere" (apply #'add-sphere edges 50 args))
          ("torus" (apply #'add-torus edges 50 args))
+         
          ("scale" (apply #'scale transform args))
          ("move" (apply #'translate transform args))
          ("rotate" (apply #'rotate transform args))
-
+         
          ("save" (draw-lines edges screen '(255 0 255))
                  (apply #'save (string-downcase (symbol-name (first args)))
                         (list dimensions screen))
