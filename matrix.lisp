@@ -17,29 +17,39 @@
           (setf (aref matrix x y) 0)))))
 
 (defun matrix-multiply (m1 m2)
-  "A general matrix multiplication routine.
-   Multiplies M1 with M2. Modifies M2 to hold the result."
-  (let ((m3 (make-matrix (array-dimension m1 0) (array-dimension m2 1))))
-    (dotimes (row (array-dimension m1 0))
-      (dotimes (col (array-dimension m2 1))
-        (setf (aref m3 row col) (dot row col m1 m2))))
-    (copy-matrix m3 m2)))
+  "A specific matrix multiplication routine. M1 is square.
+   Multiplies M1 with M2. Modifies M2 to hold the result.
+   M2 can be a list (optimization for edges to be a 2D list)."
+  (let* ((dimension (array-dimension m1 0))
+         (temp (make-array dimension)))
+    (if (listp m2)
+        (dolist (point m2)
+          (loop for val in point
+                for i = 0 then (1+ i)
+                do (setf (svref temp i) val))
+          (loop for con on point
+                for row = 0 then (1+ row)
+                do (setf (car con) (dot row m1 temp))))
+        (dotimes (col (array-dimension m2 1))
+          (dotimes (i dimension)
+            (setf (svref temp i) (aref m2 i col)))
+          (dotimes (row dimension)
+            (setf (aref m2 row col) (dot row m1 temp)))))))
 
-(defun copy-matrix (m1 m2)
-  "Copies the values of m1 to m2. Returns m2."
-  (dotimes (x (array-dimension m1 0) m2)
-    (dotimes (y (array-dimension m1 1))
-      (setf (aref m2 x y) (aref m1 x y)))))
-
-(defun dot (row col m1 m2)
-  "Dots the ROW of M1 with the COL of M2. 
+(defun dot (row m1 temp)
+  "Dots the ROW of M1 with TEMP.
    They should have the same corresponding sizes."
   (loop for i below (array-dimension m1 1)
-        sum (* (aref m1 row i) (aref m2 i col))))
+        sum (* (aref m1 row i) (svref temp i))))
 
 (defun make-matrix (&optional (rows 4) (cols 4))
   "Makes a matrix with ROWS and COLS."
   (make-array (list rows cols) :adjustable t))
+
+(defun make-edges ()
+  "Makes edges. Represented as a 2D list for efficiency.
+   Initial edges is a cons of nil."
+  (cons nil nil))
 
 (defun clear-matrix (matrix)
   "Adjusts size to zero."
@@ -55,7 +65,7 @@
          (make-symbol (intern (concatenate 'string "MAKE-" transform-string)))
          (make-doc (concatenate 'string "Makes a matrix that " (pop body)))
          (transform-doc (concatenate 'string "Applies make-"
-                                     lower-transform-string " to TRANSFORM-MATRIX")))
+                                     lower-transform-string " to MATRIX")))
     `(progn
        (defun ,make-symbol ,args
          ,make-doc
@@ -63,9 +73,9 @@
            (to-identity transform)
            ,@body
            transform))
-       (defun ,transform-name ,(append args '(transform-matrix))
+       (defun ,transform-name ,(cons 'matrix args)
          ,transform-doc
-         (matrix-multiply (,make-symbol ,@args) transform-matrix)))))
+         (matrix-multiply (,make-symbol ,@args) matrix)))))
 
 (deftransform translate (delx dely delz)
   "translates by DELX, DELY, and DELZ."
@@ -81,7 +91,7 @@
 
 (defmacro defrotation (rotate-axis axis-0 axis-1)
   "Defines a rotation around ROTATE-AXIS. AXIS-0 and AXIS-1 mark the value of the axes,
-   where x corresponds to 0, y 1, and z 2."
+   where x corresponds to 0, y 1, and z 2. Rotates from AXIS-0 to AXIS-1."
   (let* ((axis-string (symbol-name rotate-axis))
          (lower-axis-string (string-downcase axis-string))
          (rotate-symbol (intern (concatenate 'string "ROTATE-" axis-string)))
@@ -100,9 +110,10 @@
 (defrotation x 1 2)
 (defrotation y 2 0)
 
-(defun rotate (axis degrees transform-matrix)
-  "Rotate TRANSFORM-MATRIX by the rotation matrix with AXIS by DEGREES."
+(defun rotate (matrix axis degrees)
+  "Rotate MATRIX by the rotation matrix with AXIS by DEGREES."
   (case axis
-    (x (rotate-x degrees transform-matrix))
-    (y (rotate-y degrees transform-matrix))
-    (z (rotate-z degrees transform-matrix))))
+    (x (rotate-x matrix degrees))
+    (y (rotate-y matrix degrees))
+    (z (rotate-z matrix degrees))
+    (otherwise (format t "Unknown axis: ~a~%" axis))))

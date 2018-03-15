@@ -1,3 +1,10 @@
+(defun plot (x y screen color)
+  "Plots (x, y) on the 2D array SCREEN with COLOR.
+   Rounds x and y. Checks bounds. COLOR is not copied."
+  (setf x (round x) y (round y))
+  (when (and (< -1 x (array-dimension screen 0)) (< -1 y (array-dimension screen 1)))
+    (setf (aref screen x y) color)))
+
 (defmacro draw-line-base (x0 y0 x1 y1 plot-1 plot-2)
   "Base code for octant 1. Other octants can be gotten from transformations."
   `(do* ((x ,x0 (1+ x))
@@ -28,31 +35,25 @@
             (draw-line-base y0 x0 (- y0 ydif) x1 y (- (* 2 y0) x))
             (draw-line-base x0 y0 x1 (- y0 ydif) x (- (* 2 y0) y))))))
 
-(defun draw-lines (matrix screen color)
-  "Draws the lines from MATRIX onto SCREEN with COLOR."
-  (do ((index 0 (+ 2 index)))
-      ((>= index (array-dimension matrix 1)))
-    (draw-line (aref matrix 0 index)
-               (aref matrix 1 index)
-               (aref matrix 0 (1+ index))
-               (aref matrix 1 (1+ index))
-               screen color)))
+(defun draw-lines (edges screen color)
+  "Draws the lines from EDGES onto SCREEN with COLOR."
+  (loop while (car edges)
+        for p0 = (pop edges)
+        for p1 = (pop edges)
+        do (draw-line (first p0) (second p0) (first p1) (second p1) screen color)))
 
-(defun add-edge (matrix x0 y0 z0 x1 y1 z1)
-  "Adds a line from point (x0 y0 z0) to (x1 y1 z1)."
-  (add-point matrix x0 y0 z0)
-  (add-point matrix x1 y1 z1))
+(defun add-edge (edges x0 y0 z0 x1 y1 z1)
+  "Adds a line from point (x0 y0 z0) to (x1 y1 z1) to EDGES."
+  (add-point edges x1 y1 z1)
+  (add-point edges x0 y0 z0))
 
-(defun add-point (matrix x y &optional (z 0))
-  "Adds a point (x y z) onto MATRIX.
-   Appends the point as a column."
-  (adjust-array matrix (list (array-dimension matrix 0)
-                             (1+ (array-dimension matrix 1))))
-  (let ((end (1- (array-dimension matrix 1))))
-    (setf (aref matrix 0 end) x
-          (aref matrix 1 end) y
-          (aref matrix 2 end) z
-          (aref matrix 3 end) 1)))
+(defun add-point (edges x y z)
+  "Adds a point (x y z) to EDGES."
+  ;;can't change edges directly, caller's edges would stay the same
+  ;;edges starts out as a cons of nil
+  (when (car edges)
+    (setf (cdr edges) (cons (car edges) (cdr edges))))
+  (setf (car edges) (list x y z 1)))
 
 (defun draw-parametric (edges step x-function y-function &optional (z 0))
   "Given X-FUNCTION and Y-FUNCTION, which take one input and outputs the x and y
@@ -72,20 +73,16 @@
 (defun draw-circle (edges step x y z radius)
   "Draws a circle to EDGES with center (x y) and RADIUS with STEP interval. Circle shifted by Z."
   (draw-parametric edges step
-                   (lambda (s) (+ (* radius (cos (* 2 pi s))) x))
-                   (lambda (s) (+ (* radius (sin (* 2 pi s))) y))
+                   (lambda (s) (+ x (* radius (cos (* 2 pi s)))))
+                   (lambda (s) (+ y (* radius (sin (* 2 pi s)))))
                    z))
 
-(defmacro polynomial-expand (x &rest coefficients)
-  "Returns a polynomial in X with COEFFICIENTS. Starts from the least power (x^0) and
+(defun evaluate-polynomial (x &rest coefficients)
+  "Evaluates a polynomial in X with COEFFICIENTS. Starts from the least power (x^0) and
    increases with each coefficient."
-  `(+ ,@(loop for coeff in coefficients
-              for i = -1 then (1+ i)
-              if (= i -1)
-                collect coeff
-              else
-                collect `(* ,coeff ,@(loop for j upto i
-                                           collect x)))))
+  (loop for coeff in coefficients
+        for product = 1 then (* x product)
+        sum (* coeff product)))
 
 (defun draw-hermite (edges step x0 y0 x1 y1 dx0 dy0 dx1 dy1)
   "Draws a hermite curve to EDGES with points (x0 y0) and (x1 y1) and the rates wrt. time of
@@ -97,10 +94,10 @@
 (defun get-hermite-cubic (x0 x1 dx0 dx1)
   "Returns the function, given the coordinate (x0 x1) and rates of changes (dx0 dx1),
    taking in a time and returning the output on a hermite cubic curve."
-  (lambda (s) (polynomial-expand s
-                                 x0 dx0
-                                 (- (* 3 x1) (* 3 x0) (* 2 dx0) dx1)
-                                 (+ (* 2 x0) (- 0 (* 2 x1)) dx0 dx1))))
+  (lambda (s) (evaluate-polynomial s
+                                   x0 dx0
+                                   (- (* 3 x1) (* 3 x0) (* 2 dx0) dx1)
+                                   (+ (* 2 x0) (* -2 x1) dx0 dx1))))
 
 (defun draw-bezier (edges step x0 y0 x1 y1 x2 y2 x3 y3)
   "Draws a bezier curve to EDGES with endpoints (x0 y0) and (x3 y3).
@@ -112,7 +109,7 @@
 (defun get-bezier-cubic (x0 x1 x2 x3)
   "Returns the function, given the x coordinates, taking in a time and returning the output
    on a bezier cubic curve."
-  (lambda (s) (polynomial-expand s
-                                 x0 (* 3 (- x1 x0))
-                                 (- (* 3 (+ x0 x2)) (* 6 x1))
-                                 (+ (* 3 (- x1 x2)) (- x3 x0)))))
+  (lambda (s) (evaluate-polynomial s
+                                   x0 (* 3 (- x1 x0))
+                                   (- (* 3 (+ x0 x2)) (* 6 x1))
+                                   (+ (* 3 (- x1 x2)) (- x3 x0)))))
