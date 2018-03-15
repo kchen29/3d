@@ -1,3 +1,5 @@
+;;;; Matrices. Also includes transformations.
+
 (defun print-matrix (matrix)
   "Prints out MATRIX to *standard-output*."
   (format t "~{~%~{~a~4,4T~}~}~%" (matrix-to-list matrix)))
@@ -45,11 +47,6 @@
 (defun make-matrix (&optional (rows 4) (cols 4))
   "Makes a matrix with ROWS and COLS."
   (make-array (list rows cols) :adjustable t))
-
-(defun make-edges ()
-  "Makes edges. Represented as a 2D list for efficiency.
-   Initial edges is a cons of nil."
-  (cons nil nil))
 
 (defun clear-matrix (matrix)
   "Adjusts size to zero."

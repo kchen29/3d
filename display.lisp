@@ -1,3 +1,5 @@
+;;;; Interacting with screens. Primarily interfacing to the outside.
+
 (defun write-ppm (filename dimensions screen)
   "Writes a ppm, assuming P3 and max color value of 255.
    Writes to FILENAME, with DIMENSIONS and 2D array of colors SCREEN."
@@ -39,8 +41,3 @@
   (run-program "display" (list "-")
                :input (make-string-input-stream (screen-to-destination nil dimensions screen))
                :wait wait :search t))
-
-(defun clear-edges (edges)
-  "Clears EDGES."
-  (setf (car edges) nil
-        (cdr edges) nil))

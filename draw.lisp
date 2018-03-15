@@ -1,3 +1,5 @@
+;;;; Draw to screen. Add things to edges.
+
 (defun plot (x y screen color)
   "Plots (x, y) on the 2D array SCREEN with COLOR.
    Rounds x and y. Checks bounds. COLOR is not copied."
@@ -42,19 +44,6 @@
         for p1 = (pop edges)
         do (draw-line (first p0) (second p0) (first p1) (second p1) screen color)))
 
-(defun add-edge (edges x0 y0 z0 x1 y1 z1)
-  "Adds a line from point (x0 y0 z0) to (x1 y1 z1) to EDGES."
-  (add-point edges x1 y1 z1)
-  (add-point edges x0 y0 z0))
-
-(defun add-point (edges x y z)
-  "Adds a point (x y z) to EDGES."
-  ;;can't change edges directly, caller's edges would stay the same
-  ;;edges starts out as a cons of nil
-  (when (car edges)
-    (setf (cdr edges) (cons (car edges) (cdr edges))))
-  (setf (car edges) (list x y z 1)))
-
 (defun add-parametric (edges step x-function y-function &optional (z 0))
   "Given X-FUNCTION and Y-FUNCTION, which take one input and outputs the x and y
    coordinates respectively, add a parametric where s runs from 0 to 1 at STEP interval
@@ -72,10 +61,10 @@
 
 (defun add-circle (edges step x y z radius)
   "Add a circle to EDGES with center (x y) and RADIUS with STEP interval. Circle shifted by Z."
-  (draw-parametric edges step
-                   (lambda (s) (+ x (* radius (cos (* 2 pi s)))))
-                   (lambda (s) (+ y (* radius (sin (* 2 pi s)))))
-                   z))
+  (add-parametric edges step
+                  (lambda (s) (+ x (* radius (cos (* 2 pi s)))))
+                  (lambda (s) (+ y (* radius (sin (* 2 pi s)))))
+                  z))
 
 (defun evaluate-polynomial (x &rest coefficients)
   "Evaluates a polynomial in X with COEFFICIENTS. Starts from the least power (x^0) and
@@ -87,9 +76,9 @@
 (defun add-hermite (edges step x0 y0 x1 y1 dx0 dy0 dx1 dy1)
   "Add a hermite curve to EDGES with points (x0 y0) and (x1 y1) and the rates wrt. time of
    the corresponding coordinates (dx0 dy0) and (dx1 dy1), with STEP interval."
-  (draw-parametric edges step
-                   (get-hermite-cubic x0 x1 dx0 dx1)
-                   (get-hermite-cubic y0 y1 dy0 dy1)))
+  (add-parametric edges step
+                  (get-hermite-cubic x0 x1 dx0 dx1)
+                  (get-hermite-cubic y0 y1 dy0 dy1)))
 
 (defun get-hermite-cubic (x0 x1 dx0 dx1)
   "Returns the function, given the coordinate (x0 x1) and rates of changes (dx0 dx1),
@@ -102,9 +91,9 @@
 (defun add-bezier (edges step x0 y0 x1 y1 x2 y2 x3 y3)
   "Add a bezier curve to EDGES with endpoints (x0 y0) and (x3 y3).
    (x1 y1) and (x2 y2) are control points. Drawn with STEP interval."
-  (draw-parametric edges step
-                   (get-bezier-cubic x0 x1 x2 x3)
-                   (get-bezier-cubic y0 y1 y2 y3)))
+  (add-parametric edges step
+                  (get-bezier-cubic x0 x1 x2 x3)
+                  (get-bezier-cubic y0 y1 y2 y3)))
 
 (defun get-bezier-cubic (x0 x1 x2 x3)
   "Returns the function, given the x coordinates, taking in a time and returning the output
@@ -113,6 +102,7 @@
                                    x0 (* 3 (- x1 x0))
                                    (- (* 3 (+ x0 x2)) (* 6 x1))
                                    (+ (* 3 (- x1 x2)) (- x3 x0)))))
+
 (defun add-square (edges x y z width height)
   "Adds a square to EDGES where the front left point ix (x y z).
    Draws it parallel to the xy plane."

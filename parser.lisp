@@ -1,3 +1,5 @@
+;;;; Parse a script.
+
 (defmacro switch (value test &body cases)
   "Macro for switch-case statements.
    TESTs VALUE with the first element in each case of CASES.
