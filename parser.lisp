@@ -67,7 +67,7 @@
          ("circle" (apply #'draw-circle edges .01 args))
          ("hermite" (apply #'draw-hermite edges .01 args))
          ("bezier" (apply #'draw-bezier edges .01 args))
-
+         ("box" (apply #'add-box edges args))
          ("scale" (apply #'scale transform args))
          ("move" (apply #'translate transform args))
          ("rotate" (apply #'rotate transform args))
@@ -80,8 +80,8 @@
 (defun valid-command (line)
   "Returns t if line is a valid command. Nil otherwise."
   (member line
-          '("line" "circle" "hermite" "bezier" "ident" "scale"
-            "move" "rotate" "apply" "display" "save")
+          '("line" "circle" "hermite" "bezier" "box" "ident"
+            "scale" "move" "rotate" "apply" "display" "save")
           :test #'string=))
 
 (defun next-line (stream)
