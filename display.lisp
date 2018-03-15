@@ -40,3 +40,7 @@
                :input (make-string-input-stream (screen-to-destination nil dimensions screen))
                :wait wait :search t))
 
+(defun clear-edges (edges)
+  "Clears EDGES."
+  (setf (car edges) nil
+        (cdr edges) nil))

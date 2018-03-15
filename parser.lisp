@@ -60,7 +60,7 @@
     ("display" (draw-lines edges screen '(255 0 255))
                (display dimensions screen :wait t)
                (clear-screen screen))
-    ("clear" (setf edges (make-edges)))
+    ("clear" (clear-edges edges))
     (otherwise
      (let ((args (parse-args (next-line stream))))
        (switch line #'string=

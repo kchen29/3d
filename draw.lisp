@@ -153,5 +153,7 @@
 (defun add-sphere (edges step x y z r)
   "Adds a sphere into EDGES."
   (loop for point in (generate-sphere step x y z r)
-        for (p1 p2 p3 nil) in point
-        do (add-edge edges p1 p2 p3 (1+ p1) (1+ p2) (1+ p3))))
+        for p1 = (first point)
+        for p2 = (second point)
+        for p3 = (third point)
+        do (add-edge edges p1 p2 p3 (+ 3 p1) (+ 3 p2) (+ 3 p3))))
