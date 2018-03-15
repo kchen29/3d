@@ -55,9 +55,9 @@
     (setf (cdr edges) (cons (car edges) (cdr edges))))
   (setf (car edges) (list x y z 1)))
 
-(defun draw-parametric (edges step x-function y-function &optional (z 0))
+(defun add-parametric (edges step x-function y-function &optional (z 0))
   "Given X-FUNCTION and Y-FUNCTION, which take one input and outputs the x and y
-   coordinates respectively, draw a parametric where s runs from 0 to 1 at STEP interval
+   coordinates respectively, add a parametric where s runs from 0 to 1 at STEP interval
    and add the connecting lines to EDGES.
    Optionally takes a z value, defaulted to 0, where all the points are shifted by z."
   (flet ((get-x (s) (funcall x-function s))
@@ -70,8 +70,8 @@
          ((>= s (1+ step)))
       (add-edge edges prev-x prev-y z x y z))))
 
-(defun draw-circle (edges step x y z radius)
-  "Draws a circle to EDGES with center (x y) and RADIUS with STEP interval. Circle shifted by Z."
+(defun add-circle (edges step x y z radius)
+  "Add a circle to EDGES with center (x y) and RADIUS with STEP interval. Circle shifted by Z."
   (draw-parametric edges step
                    (lambda (s) (+ x (* radius (cos (* 2 pi s)))))
                    (lambda (s) (+ y (* radius (sin (* 2 pi s)))))
@@ -84,8 +84,8 @@
         for product = 1 then (* x product)
         sum (* coeff product)))
 
-(defun draw-hermite (edges step x0 y0 x1 y1 dx0 dy0 dx1 dy1)
-  "Draws a hermite curve to EDGES with points (x0 y0) and (x1 y1) and the rates wrt. time of
+(defun add-hermite (edges step x0 y0 x1 y1 dx0 dy0 dx1 dy1)
+  "Add a hermite curve to EDGES with points (x0 y0) and (x1 y1) and the rates wrt. time of
    the corresponding coordinates (dx0 dy0) and (dx1 dy1), with STEP interval."
   (draw-parametric edges step
                    (get-hermite-cubic x0 x1 dx0 dx1)
@@ -99,8 +99,8 @@
                                    (- (* 3 x1) (* 3 x0) (* 2 dx0) dx1)
                                    (+ (* 2 x0) (* -2 x1) dx0 dx1))))
 
-(defun draw-bezier (edges step x0 y0 x1 y1 x2 y2 x3 y3)
-  "Draws a bezier curve to EDGES with endpoints (x0 y0) and (x3 y3).
+(defun add-bezier (edges step x0 y0 x1 y1 x2 y2 x3 y3)
+  "Add a bezier curve to EDGES with endpoints (x0 y0) and (x3 y3).
    (x1 y1) and (x2 y2) are control points. Drawn with STEP interval."
   (draw-parametric edges step
                    (get-bezier-cubic x0 x1 x2 x3)
@@ -137,8 +137,8 @@
     (add-edge edges right down z right down back)))
 
 (defun generate-sphere (step x y z r)
-  "Generates a sphere onto edges with center (x y z), radius R, points drawn STEP times."
-  (let (edges)
+  "Generates a sphere with center (x y z), radius R, points drawn STEP times."
+  (let (points)
     (loop for phi below step
           for s = (* 2 pi (/ phi step))
           do (loop for theta below step
@@ -147,11 +147,11 @@
                                   (+ y (* r (sin s) (cos v)))
                                   (+ z (* r (sin s) (sin v)))
                                   1)
-                            edges)))
-    edges))
+                            points)))
+    points))
              
 (defun add-sphere (edges step x y z r)
-  "Adds a sphere into EDGES."
+  "Adds a sphere to EDGES."
   (loop for point in (generate-sphere step x y z r)
         for p1 = (first point)
         for p2 = (second point)
@@ -159,9 +159,9 @@
         do (add-edge edges p1 p2 p3 (+ 3 p1) (+ 3 p2) (+ 3 p3))))
 
 (defun generate-torus (step x y z r1 r2)
-  "Generates a torus onto edges with center (x y z), cross-section circle radius R1,
+  "Generates a torus with center (x y z), cross-section circle radius R1,
    rotated around with radius R2. Points drawn STEP times."
-  (let (edges)
+  (let (points)
     (loop for phi below step
           for s = (* 2 pi (/ phi step))
           do (loop for theta below step
@@ -170,11 +170,11 @@
                                   (- y (* r1 (sin v)))
                                   (- z (* (sin s) (+ r2 (* r1 (cos v)))))
                                   1)
-                            edges)))
-    edges))
+                            points)))
+    points))
 
 (defun add-torus (edges step x y z r1 r2)
-  "Adds a torus onto EDGES."
+  "Adds a torus to EDGES."
   (loop for point in (generate-torus step x y z r1 r2)
         for p1 = (first point)
         for p2 = (second point)
