@@ -135,3 +135,23 @@
     (add-edge edges right y z right y back)
     (add-edge edges x down z x down back)
     (add-edge edges right down z right down back)))
+
+(defun generate-sphere (step x y z r)
+  "Generates an edges with center (x y z), radius R, points drawn STEP times."
+  (let (edges)
+    (loop for phi below step
+          for s = (* 2 pi (/ phi step))
+          do (loop for theta below step
+                   for v = (* pi (/ theta step))
+                   do (push (list (+ x (* r (cos s)))
+                                  (+ y (* r (sin s) (cos v)))
+                                  (+ z (* r (sin s) (sin v)))
+                                  1)
+                            edges)))
+    edges))
+             
+(defun add-sphere (edges step x y z r)
+  "Adds a sphere into EDGES."
+  (loop for point in (generate-sphere step x y z r)
+        for (p1 p2 p3 nil) in point
+        do (add-edge edges p1 p2 p3 (1+ p1) (1+ p2) (1+ p3))))

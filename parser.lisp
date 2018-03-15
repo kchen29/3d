@@ -60,6 +60,7 @@
     ("display" (draw-lines edges screen '(255 0 255))
                (display dimensions screen :wait t)
                (clear-screen screen))
+    ("clear" (setf edges (make-edges)))
     (otherwise
      (let ((args (parse-args (next-line stream))))
        (switch line #'string=
@@ -68,6 +69,8 @@
          ("hermite" (apply #'draw-hermite edges .01 args))
          ("bezier" (apply #'draw-bezier edges .01 args))
          ("box" (apply #'add-box edges args))
+         ("sphere" (apply #'add-sphere edges 10 args))
+         
          ("scale" (apply #'scale transform args))
          ("move" (apply #'translate transform args))
          ("rotate" (apply #'rotate transform args))
@@ -80,8 +83,8 @@
 (defun valid-command (line)
   "Returns t if line is a valid command. Nil otherwise."
   (member line
-          '("line" "circle" "hermite" "bezier" "box" "ident"
-            "scale" "move" "rotate" "apply" "display" "save")
+          '("line" "circle" "hermite" "bezier" "box" "sphere" "ident"
+            "scale" "move" "rotate" "apply" "display" "save" "clear")
           :test #'string=))
 
 (defun next-line (stream)
