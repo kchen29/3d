@@ -133,9 +133,9 @@
           for s = (* 2 pi (/ phi step))
           do (loop for theta below step
                    for v = (* pi (/ theta step))
-                   do (push (list (+ x (* r (cos s)))
-                                  (+ y (* r (sin s) (cos v)))
-                                  (+ z (* r (sin s) (sin v)))
+                   do (push (list (+ x (* r (cos v)))
+                                  (+ y (* r (sin v) (cos s)))
+                                  (+ z (* r (sin v) (sin s)))
                                   1)
                             points)))
     points))
